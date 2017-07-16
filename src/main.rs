@@ -84,6 +84,7 @@ The document has moved 忠犬ハチ公
 <a hrefff=None>
 <a href='one world'>
 <a href = /this_is_valid?>
+<a href = extra123123?=hello extra>
 <a href         = \"hello_world\">
 </BODY></HTML>");
 
