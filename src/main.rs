@@ -17,7 +17,6 @@ struct Parser {
 }
 
 impl Parser {
-
     fn new(input: String) -> Parser {
         Parser {
             pos: 0,
@@ -43,7 +42,9 @@ impl Parser {
     }
 
     fn consume_until<F>(&mut self, test: F) -> String
-        where F: Fn(char) -> bool {
+    where
+        F: Fn(char) -> bool,
+    {
         let mut result = String::new();
         while !self.finished() && !test(self.peek_char()) {
             result.push(self.next_char());
@@ -53,11 +54,9 @@ impl Parser {
     }
 
     fn consume_whitespaces(&mut self) {
-        let test = |c| {
-            match c {
-                ' ' | '\t' | '\n' => false,
-                _ => true
-            }
+        let test = |c| match c {
+            ' ' | '\t' | '\n' => false,
+            _ => true,
         };
         self.consume_until(test);
     }
@@ -82,11 +81,13 @@ fn parse_html(html: String) -> HashMap<String, u32> {
         for a in url_attributes.clone() {
             let mut score = a.len();
             for ch in a.chars() {
+
                 if ch == cur_char {
                     score -= 1
                 } else {
                     break;
                 }
+
                 if score == 0 {
                     // Check to see that the next char is a valid one of the end of an attrbute
                     p.consume_whitespaces();
@@ -102,18 +103,13 @@ fn parse_html(html: String) -> HashMap<String, u32> {
                         '"' | '\'' => {
                             let nc = p.next_char();
                             let test = |c| c == nc;
-
                             p.consume_until(test)
-                        },
+                        }
                         _ => {
-
-                            let test = |c| {
-                                match c {
-                                    '>' | ' ' | '\t' | '\n' => true,
-                                    _ => false
-                                }
+                            let test = |c| match c {
+                                '>' | ' ' | '\t' | '\n' => true,
+                                _ => false,
                             };
-
                             p.consume_until(test)
                         }
                     };
@@ -121,14 +117,16 @@ fn parse_html(html: String) -> HashMap<String, u32> {
 
                     // NOTE: Can't use `link` after this as `found_links.entry` now owns it
                     *found_links.entry(link).or_insert(0) += 1;
-               } else {
+                } else {
                     cur_char = p.next_char();
-               }
-           }
+                }
+            }
 
         }
 
-        if p.finished() { break }
+        if p.finished() {
+            break;
+        }
     }
 
     // println!("{:?}", found_links);
@@ -139,7 +137,7 @@ fn parse_html(html: String) -> HashMap<String, u32> {
 
 fn main() {
 
-/*    let html = String::from("<HTML><HEAD><meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">
+    /*    let html = String::from("<HTML><HEAD><meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">
 <TITLE src=\"hello\">302 Moved</TITLE></HEAD><BODY>
 <H1 href=hello_world>302 Moved</H1>
 The document has moved 忠犬ハチ公 href=oneoneone
@@ -170,20 +168,22 @@ src=&quot;//www.redditstatic.com/video-settings.svg&quot;&gt;
         // println!("Response: {}", res.status());
         // println!("Headers: \n{}", res.headers());
 
-        res.body().fold(Vec::new(), |mut v, chunk| {
-            v.extend(&chunk[..]);
-            future::ok::<_, Error>(v)
-        }).and_then(|chunks| {
-            let s = String::from_utf8(chunks).unwrap();
-            print!("BODY: {}\n", s);
+        res.body()
+            .fold(Vec::new(), |mut v, chunk| {
+                v.extend(&chunk[..]);
+                future::ok::<_, Error>(v)
+            })
+            .and_then(|chunks| {
+                let s = String::from_utf8(chunks).unwrap();
+                print!("BODY: {}\n", s);
 
-            let links = parse_html(s);
-            for (link, count) in &links {
-                println!("({}) -> {}", count, link);
-            }
+                let links = parse_html(s);
+                for (link, count) in &links {
+                    println!("({}) -> {}", count, link);
+                }
 
-            future::ok::<_, Error>(0)
-        })
+                future::ok::<_, Error>(0)
+            })
 
     });
 
