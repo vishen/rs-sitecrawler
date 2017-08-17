@@ -1,43 +1,35 @@
 
 pub struct Parser {
     pos: usize,
-    input: String,
+    chars: Vec<char>,
 }
 
 impl Parser {
     pub fn new(input: String) -> Parser {
+        let chars = input.chars().collect::<Vec<_>>();
         Parser {
             pos: 0,
-            input: input,
+            chars: chars,
         }
     }
 
     // Read the current character without consuming it.
     pub fn peek_char(&mut self) -> char {
-        self.input[self.pos..].chars().next().unwrap()
+        self.chars[self.pos]
     }
 
     pub fn next_char(&mut self) -> char {
-        // Increment to pos by the number of bytes in the codepoint
-        // TODO: How does this work?
 
-        // Look at how the following does it, it seems much nice than this?
-        // >> https://github.com/pwoolcoc/crafting-interpreters-rust/blob/6d75fe54c58278fffc2213b623103d2673d0e9c1/src/scanner.rs#L16
-
-        let mut iter = self.input[self.pos..].char_indices();
-        let (_, cur_char) = iter.next().unwrap();
-        let (next_pos, _) = iter.next().unwrap_or((1, ' '));
-        self.pos += next_pos;
-
-        cur_char
+        self.pos += 1;
+        self.chars[self.pos - 1]
     }
 
-    pub fn consume_until<F>(&mut self, test: F) -> String
+    pub fn consume_until<F>(&mut self, test_fn: F) -> String
     where
         F: Fn(char) -> bool,
     {
         let mut result = String::new();
-        while !self.finished() && !test(self.peek_char()) {
+        while !self.finished() && !test_fn(self.peek_char()) {
             result.push(self.next_char());
         }
 
@@ -53,6 +45,6 @@ impl Parser {
     }
 
     pub fn finished(&self) -> bool {
-        self.pos >= self.input.len()
+        self.pos >= self.chars.len()
     }
 }
