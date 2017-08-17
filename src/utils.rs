@@ -72,7 +72,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn parse_html_for_link() {
+    fn parse_html_for_links() {
 
         let html = String::from("<HTML><HEAD><meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">
 <TITLE src=\"hello\">302 Moved</TITLE></HEAD><BODY>
@@ -90,9 +90,8 @@ src=&quot;//www.redditstatic.com/video-settings.svg&quot;&gt;
 <a href=\"//www.someurl.com/favicon.ico\">
 </BODY></HTML>");
         let found_links = parse_html(html);
-        //println!("{:?}", found_links);
 
-        let test_cases: [String; 9] = [
+        let test_cases: [String; 11] = [
             String::from("hello"),
             String::from("hello_world"),
             String::from("oneoneone"),
@@ -102,19 +101,20 @@ src=&quot;//www.redditstatic.com/video-settings.svg&quot;&gt;
             String::from("/this_is_valid?"),
             String::from("extra123123?=hello"),
             String::from("//www.someurl.com/favicon.ico"),
+            String::from("#content"),
+            String::from("javascript:"),
         ];
 
-        /*assert!(
-            found_links.len() == 9,
-            "Length of found_links was '{}'", found_links.len()
-        );*/
-
         for t in test_cases.iter() {
-            println!("{}", t);
             assert!(
                 found_links.contains_key(t),
                 "Couldn't find key '{}' in '{:?}", t, found_links
             );
         }
+
+        assert!(
+            found_links.len() == test_cases.len(),
+            "Mismatched len; found_links={} test_cases={} ({:?})", found_links.len(), test_cases.len(), found_links
+        );
     }
 }

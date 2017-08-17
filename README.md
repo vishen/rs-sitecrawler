@@ -6,6 +6,11 @@ This is a play around in learning Rust. It should crawl a single root url(?) fin
 $ cargo run
 ```
 
+## Tests
+```
+$ cargo test
+```
+
 ## Useful Resources
 ```
 - http://blog.skylight.io/rust-means-never-having-to-close-a-socket/
