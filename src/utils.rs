@@ -67,6 +67,37 @@ pub fn parse_html(html: String) -> HashMap<String, u32> {
 
 }
 
+
+pub fn normalise_links() {
+/*
+    let test_cases: [String; 11] = [
+        String::from("hello"),
+        String::from("hello_world"),
+        String::from("oneoneone"),
+        String::from("&quot;//www.someurl.com/video-settings.svg&quot;&gt;"),
+        String::from("https://www.someurl.com/?gfe_rd=cr&amp;ei=PpJzIHYAg"),
+        String::from("one world"),
+        String::from("/this_is_valid?"),
+        String::from("extra123123?=hello"),
+        String::from("//www.someurl.com/favicon.ico"),
+        String::from("#content"),
+        String::from("javascript:"),
+    ];
+
+    if starts with http:// or https:// then fine
+    if starts with // then add http:
+    if starts with / then add <base_url>/<rest>
+    if starts with # then add <base_url>#<rest>
+    if starts with alphanumeric and ends in alphanumeric or \ then add <base_url>/<rest>
+    else ignore
+
+    #TODO How to deal with &quot;//www.someurl.com/video-settings.svg&quot;&gt; ??
+*/
+
+    // TODO(): Write out the above!
+
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -78,8 +109,8 @@ mod tests {
 <TITLE src=\"hello\">302 Moved</TITLE></HEAD><BODY>
 <H1 href=hello_world>302 Moved</H1>
 The document has moved 忠犬ハチ公 href=oneoneone
-src=&quot;//www.redditstatic.com/video-settings.svg&quot;&gt;
-<A HREF=\"https://www.google.co.uk/?gfe_rd=cr&amp;ei=PpxeWa34NcGN8QeJzIHYAg\">here</A>.
+src=&quot;//www.someurl.com/video-settings.svg&quot;&gt;
+<A HREF=\"https://www.someurl.com/?gfe_rd=cr&amp;ei=PpJzIHYAg\">here</A>.
 <a hrefff=None>
 <a href='one world'>
 <a href = /this_is_valid?>
@@ -95,8 +126,8 @@ src=&quot;//www.redditstatic.com/video-settings.svg&quot;&gt;
             String::from("hello"),
             String::from("hello_world"),
             String::from("oneoneone"),
-            String::from("&quot;//www.redditstatic.com/video-settings.svg&quot;&gt;"),
-            String::from("https://www.google.co.uk/?gfe_rd=cr&amp;ei=PpxeWa34NcGN8QeJzIHYAg"),
+            String::from("&quot;//www.someurl.com/video-settings.svg&quot;&gt;"),
+            String::from("https://www.someurl.com/?gfe_rd=cr&amp;ei=PpJzIHYAg"),
             String::from("one world"),
             String::from("/this_is_valid?"),
             String::from("extra123123?=hello"),
