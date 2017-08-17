@@ -69,7 +69,7 @@ pub fn parse_html(html: String) -> HashMap<String, u32> {
 
 
 pub fn normalise_links() {
-/*
+    /*
     let test_cases: [String; 11] = [
         String::from("hello"),
         String::from("hello_world"),
@@ -91,21 +91,23 @@ pub fn normalise_links() {
     if starts with alphanumeric and ends in alphanumeric or \ then add <base_url>/<rest>
     else ignore
 
+    struct Link
+        - original string
+        - absolute string
+        - should_crawl bool
+
     #TODO How to deal with &quot;//www.someurl.com/video-settings.svg&quot;&gt; ??
-*/
+    */
 
     // TODO(): Write out the above!
 
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+#[test]
+fn parse_html_for_links() {
 
-    #[test]
-    fn parse_html_for_links() {
-
-        let html = String::from("<HTML><HEAD><meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">
+    let html = String::from(
+        "<HTML><HEAD><meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">
 <TITLE src=\"hello\">302 Moved</TITLE></HEAD><BODY>
 <H1 href=hello_world>302 Moved</H1>
 The document has moved 忠犬ハチ公 href=oneoneone
@@ -119,33 +121,38 @@ src=&quot;//www.someurl.com/video-settings.svg&quot;&gt;
 <a href=#content>
 <a href=javascript: void 0;>
 <a href=\"//www.someurl.com/favicon.ico\">
-</BODY></HTML>");
-        let found_links = parse_html(html);
+</BODY></HTML>",
+    );
+    let found_links = parse_html(html);
 
-        let test_cases: [String; 11] = [
-            String::from("hello"),
-            String::from("hello_world"),
-            String::from("oneoneone"),
-            String::from("&quot;//www.someurl.com/video-settings.svg&quot;&gt;"),
-            String::from("https://www.someurl.com/?gfe_rd=cr&amp;ei=PpJzIHYAg"),
-            String::from("one world"),
-            String::from("/this_is_valid?"),
-            String::from("extra123123?=hello"),
-            String::from("//www.someurl.com/favicon.ico"),
-            String::from("#content"),
-            String::from("javascript:"),
-        ];
+    let test_cases: [String; 11] = [
+        String::from("hello"),
+        String::from("hello_world"),
+        String::from("oneoneone"),
+        String::from("&quot;//www.someurl.com/video-settings.svg&quot;&gt;"),
+        String::from("https://www.someurl.com/?gfe_rd=cr&amp;ei=PpJzIHYAg"),
+        String::from("one world"),
+        String::from("/this_is_valid?"),
+        String::from("extra123123?=hello"),
+        String::from("//www.someurl.com/favicon.ico"),
+        String::from("#content"),
+        String::from("javascript:"),
+    ];
 
-        for t in test_cases.iter() {
-            assert!(
-                found_links.contains_key(t),
-                "Couldn't find key '{}' in '{:?}", t, found_links
-            );
-        }
-
+    for t in test_cases.iter() {
         assert!(
-            found_links.len() == test_cases.len(),
-            "Mismatched len; found_links={} test_cases={} ({:?})", found_links.len(), test_cases.len(), found_links
+            found_links.contains_key(t),
+            "Couldn't find key '{}' in '{:?}",
+            t,
+            found_links
         );
     }
+
+    assert!(
+        found_links.len() == test_cases.len(),
+        "Mismatched len; found_links={} test_cases={} ({:?})",
+        found_links.len(),
+        test_cases.len(),
+        found_links
+    );
 }
