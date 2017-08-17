@@ -29,8 +29,7 @@ impl Parser {
         let (next_pos, _) = iter.next().unwrap_or((1, ' '));
         self.pos += next_pos;
 
-        let lower_char = cur_char.to_lowercase().last().unwrap();
-        lower_char
+        cur_char
     }
 
     pub fn consume_until<F>(&mut self, test: F) -> String

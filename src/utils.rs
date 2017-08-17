@@ -10,13 +10,12 @@ pub fn parse_html(html: String) -> HashMap<String, u32> {
     let url_attributes = vec!["href", "src"];
 
     loop {
-        let mut cur_char = p.next_char();
+        let mut cur_char = p.next_char().to_lowercase().last().unwrap();
 
         // NOTE: This only works because neither attribute starts with the same letter
         for a in url_attributes.clone() {
             let mut score = a.len();
             for ch in a.chars() {
-
                 if ch == cur_char {
                     score -= 1
                 } else {
@@ -24,7 +23,7 @@ pub fn parse_html(html: String) -> HashMap<String, u32> {
                 }
 
                 if score == 0 {
-                    // Check to see that the next char is a valid one of the end of an attrbute
+                    // Check to see that the next char is a valid one of the end of an attribute
                     p.consume_whitespaces();
 
                     // Invalid attribute
@@ -52,7 +51,8 @@ pub fn parse_html(html: String) -> HashMap<String, u32> {
                     // NOTE: Can't use `link` after this as `found_links.entry` now owns it
                     *found_links.entry(link).or_insert(0) += 1;
                 } else {
-                    cur_char = p.next_char();
+                    cur_char = p.next_char().to_lowercase().last().unwrap();
+;
                 }
             }
 
@@ -90,11 +90,31 @@ src=&quot;//www.redditstatic.com/video-settings.svg&quot;&gt;
 <a href=\"//www.someurl.com/favicon.ico\">
 </BODY></HTML>");
         let found_links = parse_html(html);
-        println!("{:?}", found_links);
+        //println!("{:?}", found_links);
 
-        assert!(
+        let test_cases: [String; 9] = [
+            String::from("hello"),
+            String::from("hello_world"),
+            String::from("oneoneone"),
+            String::from("&quot;//www.redditstatic.com/video-settings.svg&quot;&gt;"),
+            String::from("https://www.google.co.uk/?gfe_rd=cr&amp;ei=PpxeWa34NcGN8QeJzIHYAg"),
+            String::from("one world"),
+            String::from("/this_is_valid?"),
+            String::from("extra123123?=hello"),
+            String::from("//www.someurl.com/favicon.ico"),
+        ];
+
+        /*assert!(
             found_links.len() == 9,
             "Length of found_links was '{}'", found_links.len()
-        );
+        );*/
+
+        for t in test_cases.iter() {
+            println!("{}", t);
+            assert!(
+                found_links.contains_key(t),
+                "Couldn't find key '{}' in '{:?}", t, found_links
+            );
+        }
     }
 }
