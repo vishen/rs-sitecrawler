@@ -53,7 +53,7 @@ fn main() {
                 /*for (link, count) in &links {
                     println!("({}) -> {}", count, link);
                 }*/
-                let normalised_links = normalise_links(base_url, links);
+                let normalised_links = normalise_links(base_url, &links);
 
                 future::ok::<_, Error>(0)
             })

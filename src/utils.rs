@@ -113,7 +113,7 @@ impl Link {
     }
 }
 
-pub fn normalise_links(base_url: &str, links: HashMap<String, u32>) -> HashMap<Link, u32> {
+pub fn normalise_links(base_url: &str, links: &HashMap<String, u32>) -> HashMap<Link, u32> {
 
     // TODO(): Re-write this is a parser!!!
 
@@ -160,7 +160,7 @@ pub fn normalise_links(base_url: &str, links: HashMap<String, u32>) -> HashMap<L
                 rest_of_url = &format_string_holder;
             }
             scheme_split = rest_of_url.splitn(2, "//").collect();
-        } else if scheme_split[0] == "" {
+        } else if scheme_split[0] == "" || scheme_split[0] == ":" {
             format_string_holder = format!("http://{}", scheme_split[1]);
             rest_of_url = &format_string_holder;
             scheme_split = rest_of_url.splitn(2, "//").collect();
@@ -191,7 +191,7 @@ pub fn normalise_links(base_url: &str, links: HashMap<String, u32>) -> HashMap<L
 
         // println!("original={} ##### link={}", link, _link.url());
 
-        normalised_links.insert(_link, count);
+        normalised_links.insert(_link, *count);
     }
 
 
@@ -254,30 +254,169 @@ src=&quot;//www.someurl.com/video-settings.svg&quot;&gt;
 
 #[test]
 fn normalise_parsed_links() {
-    let mut links: HashMap<String, u32> = HashMap::new();
 
-    links.insert(String::from("https://example.com?hello=world#id=1"), 1);
-    links.insert(
-        String::from("https://an.example.com?hello=world#id=1?onetwo"),
-        1,
-    );
-    links.insert(String::from("http://d.example.com"), 1);
-    links.insert(String::from("://example.com.au#hello"), 1);
-    links.insert(String::from("//example.com?hello=world"), 1);
-    links.insert(String::from("/path/somewhere"), 1);
-    links.insert(String::from("path/somewhere"), 1);
-    links.insert(String::from("#id123"), 1);
-    links.insert(String::from("ftp://bad.example.com"), 1);
-    links.insert(String::from("javascript:"), 1);
+    struct TestCase {
+        link: Link,
+    }
 
-    let links_len = links.len();
+    let test_cases: [TestCase; 9] = [
+        TestCase {
+            link: Link {
+                original: "https://example.com/one?hello=world#id=1".to_string(),
+                scheme: "https:".to_string(),
+                domain: "example.com".to_string(),
+                path: Some("one".to_string()),
+                query: Some("hello=world".to_string()),
+                hash: Some("id=1".to_string()),
+                is_from_base_url: true,
+            },
+        },
 
-    let normalised_links = normalise_links("http://example.com", links);
+        TestCase {
+            link: Link {
+                original: "http://d.example.com".to_string(),
+                scheme: "http:".to_string(),
+                domain: "d.example.com".to_string(),
+                path: None,
+                query: None,
+                hash: None,
+                is_from_base_url: true,
+            },
+        },
 
-    assert!(
-        normalised_links.len() == links_len - 1,
-        "Mismatched len: {} and {}",
-        normalised_links.len(),
-        links_len - 1
-    );
+        TestCase {
+            link: Link {
+                original: "//example.com?hello=world".to_string(),
+                scheme: "http:".to_string(),
+                domain: "example.com".to_string(),
+                path: None,
+                query: Some("hello=world".to_string()),
+                hash: None,
+                is_from_base_url: true,
+            },
+        },
+
+        TestCase {
+            link: Link {
+                original: "/path/somewhere".to_string(),
+                scheme: "http:".to_string(),
+                domain: "example.com".to_string(),
+                path: Some("path/somewhere".to_string()),
+                query: None,
+                hash: None,
+                is_from_base_url: true,
+            },
+        },
+
+        TestCase {
+            link: Link {
+                original: "path/somewhere".to_string(),
+                scheme: "http:".to_string(),
+                domain: "example.com".to_string(),
+                path: Some("path/somewhere".to_string()),
+                query: None,
+                hash: None,
+                is_from_base_url: true,
+            },
+        },
+
+        TestCase {
+            link: Link {
+                original: "#id123".to_string(),
+                scheme: "http:".to_string(),
+                domain: "example.com".to_string(),
+                path: None,
+                query: None,
+                hash: Some("id123".to_string()),
+                is_from_base_url: true,
+            },
+        },
+
+        TestCase {
+            link: Link {
+                original: "ftp://bad.example.com".to_string(),
+                scheme: "ftp:".to_string(),
+                domain: "bad.example.com".to_string(),
+                path: None,
+                query: None,
+                hash: None,
+                is_from_base_url: true,
+            },
+        },
+
+        TestCase {
+            link: Link {
+                original: "https://not.the.same.domain".to_string(),
+                scheme: "https:".to_string(),
+                domain: "not.the.same.domain".to_string(),
+                path: None,
+                query: None,
+                hash: None,
+                is_from_base_url: false,
+            },
+        },
+
+        TestCase {
+            link: Link {
+                original: "://example.com#hello".to_string(),
+                scheme: "http:".to_string(),
+                domain: "example.com".to_string(),
+                path: None,
+                query: None,
+                hash: Some("hello".to_string()),
+                is_from_base_url: true,
+            },
+        },
+    ];
+
+    for test_case in test_cases.iter() {
+        let _link = &test_case.link;
+
+        let mut links: HashMap<String, u32> = HashMap::new();
+
+        links.insert(_link.original.clone(), 1);
+
+        let normalised_links = normalise_links("http://example.com", &links);
+
+        assert!(
+            normalised_links.len() == 1,
+            "Normalised links didn't return a result"
+        );
+
+        let nl = normalised_links.keys().nth(0).unwrap();
+
+        assert!(
+            nl.original == _link.original,
+            "{} != {}",
+            nl.original,
+            _link.original
+        );
+        assert!(
+            nl.scheme == _link.scheme,
+            "{} != {}",
+            nl.scheme,
+            _link.scheme
+        );
+        assert!(
+            nl.domain == _link.domain,
+            "{} != {}",
+            nl.domain,
+            _link.domain
+        );
+        assert!(nl.path == _link.path, "{:?} != {:?}", nl.path, _link.path);
+        assert!(
+            nl.query == _link.query,
+            "{:?} != {:?}",
+            nl.query,
+            _link.query
+        );
+        assert!(nl.hash == _link.hash, "{:?} != {:?}", nl.hash, _link.hash);
+        assert!(
+            nl.is_from_base_url == _link.is_from_base_url,
+            "{} != {}",
+            nl.is_from_base_url,
+            _link.is_from_base_url
+        );
+
+    }
 }
