@@ -72,7 +72,7 @@ pub struct Link {
     scheme: String,
     domain: String,
 
-    path : Option<String>,
+    path: Option<String>,
     query: Option<String>,
     hash: Option<String>,
 
@@ -89,7 +89,7 @@ impl Link {
             Some(s) => {
                 _url.push_str("/");
                 _url.push_str(&s);
-            },
+            }
             _ => (),
         }
 
@@ -97,7 +97,7 @@ impl Link {
             Some(s) => {
                 _url.push_str("?");
                 _url.push_str(&s);
-            },
+            }
             _ => (),
         }
 
@@ -105,7 +105,7 @@ impl Link {
             Some(s) => {
                 _url.push_str("#");
                 _url.push_str(&s);
-            },
+            }
             _ => (),
         }
 
@@ -179,9 +179,14 @@ pub fn normalise_links(base_url: &str, links: HashMap<String, u32>) -> HashMap<L
 
         // println!("link={} -> scheme={}, domain={}, path={:?}, query={:?}, hash={:?}, is_from_base_url={}", link, scheme, domain, path, query, hash, is_from_base_url);
 
-        let _link = Link{
-            original:link.clone(), scheme:scheme.to_string(), domain:domain.to_string(),
-            path:path, query:query, hash:hash, is_from_base_url:is_from_base_url,
+        let _link = Link {
+            original: link.clone(),
+            scheme: scheme.to_string(),
+            domain: domain.to_string(),
+            path: path,
+            query: query,
+            hash: hash,
+            is_from_base_url: is_from_base_url,
         };
 
         // println!("original={} ##### link={}", link, _link.url());
@@ -252,7 +257,10 @@ fn normalise_parsed_links() {
     let mut links: HashMap<String, u32> = HashMap::new();
 
     links.insert(String::from("https://example.com?hello=world#id=1"), 1);
-    links.insert(String::from("https://an.example.com?hello=world#id=1?onetwo"), 1);
+    links.insert(
+        String::from("https://an.example.com?hello=world#id=1?onetwo"),
+        1,
+    );
     links.insert(String::from("http://d.example.com"), 1);
     links.insert(String::from("://example.com.au#hello"), 1);
     links.insert(String::from("//example.com?hello=world"), 1);
@@ -266,5 +274,10 @@ fn normalise_parsed_links() {
 
     let normalised_links = normalise_links("http://example.com", links);
 
-    assert!(normalised_links.len() == links_len - 1, "Mismatched len: {} and {}", normalised_links.len(), links_len - 1);
+    assert!(
+        normalised_links.len() == links_len - 1,
+        "Mismatched len: {} and {}",
+        normalised_links.len(),
+        links_len - 1
+    );
 }

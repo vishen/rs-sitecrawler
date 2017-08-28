@@ -16,7 +16,7 @@ use futures::stream::Stream;
 use hyper::{Client, Error};
 use hyper_tls::HttpsConnector;
 
-use utils::{parse_html, normalise_links};
+use utils::{normalise_links, parse_html};
 
 
 fn main() {
