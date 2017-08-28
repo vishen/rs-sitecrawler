@@ -3,8 +3,6 @@ use parser::Parser;
 
 pub fn parse_html(html: String) -> HashMap<String, u32> {
 
-    // TODO(): Ignore `url_attributes` in `<script>` tags
-
     let mut found_links: HashMap<String, u32> = HashMap::new();
     let mut p = Parser::new(html);
     let url_attributes = vec!["href", "src"];
@@ -67,40 +65,132 @@ pub fn parse_html(html: String) -> HashMap<String, u32> {
 
 }
 
+#[derive(Hash, Eq, PartialEq, Debug)]
+pub struct Link {
+    original: String,
 
-pub fn normalise_links() {
-    /*
-    let test_cases: [String; 11] = [
-        String::from("hello"),
-        String::from("hello_world"),
-        String::from("oneoneone"),
-        String::from("&quot;//www.someurl.com/video-settings.svg&quot;&gt;"),
-        String::from("https://www.someurl.com/?gfe_rd=cr&amp;ei=PpJzIHYAg"),
-        String::from("one world"),
-        String::from("/this_is_valid?"),
-        String::from("extra123123?=hello"),
-        String::from("//www.someurl.com/favicon.ico"),
-        String::from("#content"),
-        String::from("javascript:"),
-    ];
+    scheme: String,
+    domain: String,
 
-    if starts with http:// or https:// then fine
-    if starts with // then add http:
-    if starts with / then add <base_url>/<rest>
-    if starts with # then add <base_url>#<rest>
-    if starts with alphanumeric and ends in alphanumeric or \ then add <base_url>/<rest>
-    else ignore
+    path : Option<String>,
+    query: Option<String>,
+    hash: Option<String>,
 
-    struct Link
-        - original string
-        - absolute string
-        - should_crawl bool
+    is_from_base_url: bool,
+}
 
-    #TODO How to deal with &quot;//www.someurl.com/video-settings.svg&quot;&gt; ??
-    */
+impl Link {
+    pub fn url(&self) -> String {
+        // TODO(): There HAS TO be a better way to do this!
 
-    // TODO(): Write out the above!
+        let mut _url = format!("{}//{}", self.scheme, self.domain);
 
+        match self.path.clone() {
+            Some(s) => {
+                _url.push_str("/");
+                _url.push_str(&s);
+            },
+            _ => (),
+        }
+
+        match self.query.clone() {
+            Some(s) => {
+                _url.push_str("?");
+                _url.push_str(&s);
+            },
+            _ => (),
+        }
+
+        match self.hash.clone() {
+            Some(s) => {
+                _url.push_str("#");
+                _url.push_str(&s);
+            },
+            _ => (),
+        }
+
+        _url
+    }
+}
+
+pub fn normalise_links(base_url: &str, links: HashMap<String, u32>) -> HashMap<Link, u32> {
+
+    // TODO(): Re-write this is a parser!!!
+
+    let base_url_split: Vec<&str> = base_url.splitn(2, "//").collect();
+    let mut normalised_links: HashMap<Link, u32> = HashMap::new();
+
+    // TODO(): @Hack This just seems wrong, but I can't figure out how this
+    // should be done? Force the lifetime of a String created from "format!()"
+    // to live longer
+    let mut format_string_holder: String;
+
+    for (link, count) in links {
+
+        // Ignore known HTML javascript short-cuts
+        if link == "javascript:" {
+            continue;
+        }
+
+        let hash_split: Vec<&str> = link.splitn(2, "#").collect();
+        let mut rest_of_url: &str = hash_split[0];
+        let hash = match hash_split.len() {
+            2 => Some(hash_split[1].to_string()),
+            _ => None,
+        };
+
+        let query_split: Vec<&str> = rest_of_url.splitn(2, "?").collect();
+        rest_of_url = query_split[0];
+        let query = match query_split.len() {
+            2 => Some(query_split[1].to_string()),
+            _ => None,
+        };
+
+
+        let mut scheme_split: Vec<&str> = rest_of_url.splitn(2, "//").collect();
+        // No scheme found
+        if scheme_split.len() == 1 {
+            // Add the base url
+            // TODO(): @Cleanup - there must be a better way of doing this...?
+            if scheme_split[0] == "" || scheme_split[0].chars().nth(0).unwrap() == '/' {
+                format_string_holder = format!("{}{}", base_url, scheme_split[0]);
+                rest_of_url = &format_string_holder;
+            } else {
+                format_string_holder = format!("{}/{}", base_url, scheme_split[0]);
+                rest_of_url = &format_string_holder;
+            }
+            scheme_split = rest_of_url.splitn(2, "//").collect();
+        } else if scheme_split[0] == "" {
+            format_string_holder = format!("http://{}", scheme_split[1]);
+            rest_of_url = &format_string_holder;
+            scheme_split = rest_of_url.splitn(2, "//").collect();
+        }
+
+        let scheme = scheme_split[0];
+        rest_of_url = scheme_split[1];
+
+        let path_split: Vec<&str> = rest_of_url.splitn(2, "/").collect();
+        let path = match path_split.len() {
+            2 => Some(path_split[1].to_string()),
+            _ => None,
+        };
+        let domain = path_split[0];
+        let is_from_base_url = domain.ends_with(base_url_split[1]);
+
+        // println!("link={} -> scheme={}, domain={}, path={:?}, query={:?}, hash={:?}, is_from_base_url={}", link, scheme, domain, path, query, hash, is_from_base_url);
+
+        let _link = Link{
+            original:link.clone(), scheme:scheme.to_string(), domain:domain.to_string(),
+            path:path, query:query, hash:hash, is_from_base_url:is_from_base_url,
+        };
+
+        // println!("original={} ##### link={}", link, _link.url());
+
+        normalised_links.insert(_link, count);
+    }
+
+
+    normalised_links
 }
 
 #[test]
@@ -155,4 +245,26 @@ src=&quot;//www.someurl.com/video-settings.svg&quot;&gt;
         test_cases.len(),
         found_links
     );
+}
+
+#[test]
+fn normalise_parsed_links() {
+    let mut links: HashMap<String, u32> = HashMap::new();
+
+    links.insert(String::from("https://example.com?hello=world#id=1"), 1);
+    links.insert(String::from("https://an.example.com?hello=world#id=1?onetwo"), 1);
+    links.insert(String::from("http://d.example.com"), 1);
+    links.insert(String::from("://example.com.au#hello"), 1);
+    links.insert(String::from("//example.com?hello=world"), 1);
+    links.insert(String::from("/path/somewhere"), 1);
+    links.insert(String::from("path/somewhere"), 1);
+    links.insert(String::from("#id123"), 1);
+    links.insert(String::from("ftp://bad.example.com"), 1);
+    links.insert(String::from("javascript:"), 1);
+
+    let links_len = links.len();
+
+    let normalised_links = normalise_links("http://example.com", links);
+
+    assert!(normalised_links.len() == links_len - 1, "Mismatched len: {} and {}", normalised_links.len(), links_len - 1);
 }

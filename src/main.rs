@@ -16,15 +16,16 @@ use futures::stream::Stream;
 use hyper::{Client, Error};
 use hyper_tls::HttpsConnector;
 
-use utils::parse_html;
+use utils::{parse_html, normalise_links};
 
 
 fn main() {
-
+    // TODO(): Apparently hyper doesn't do redirects...
+    let base_url = "https://www.reddit.com";
 
     info!("Starting site crawl!");
 
-    let url = "https://www.reddit.com/".parse::<hyper::Uri>().unwrap();
+    let url = base_url.parse::<hyper::Uri>().unwrap();
 
     let mut core = tokio_core::reactor::Core::new().unwrap();
     let handle = core.handle();
@@ -49,9 +50,10 @@ fn main() {
                 print!("BODY: {}\n", s);
 
                 let links = parse_html(s);
-                for (link, count) in &links {
+                /*for (link, count) in &links {
                     println!("({}) -> {}", count, link);
-                }
+                }*/
+                let normalised_links = normalise_links(base_url, links);
 
                 future::ok::<_, Error>(0)
             })
